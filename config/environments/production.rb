@@ -48,7 +48,12 @@ Rails.application.configure do
   config.log_tags = [:request_id]
 
   # Use a different cache store in production.
-  # config.cache_store = :mem_cache_store
+  config.cache_store = :redis_cache_store, {
+    url: ENV.fetch('REDIS_URL', nil),
+    expires_in: 90.minutes,
+    connect_timeout: 30,
+    reconnect_attempts: 5
+  }
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
   # the I18n.default_locale when a translation cannot be found).
