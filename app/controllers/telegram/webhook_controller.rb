@@ -13,6 +13,15 @@ class Telegram::WebhookController < Telegram::Bot::UpdatesController
   rescue_from NotAdmin do |e|
   end
 
+  def callback_query(data)
+    edit_message :text, text: "Группа `#{data}`", parse_mode: 'Markdown', reply_markup: {
+      inline_keyboard: [
+        [{ text: 'Изменить', callback_data: :edit }, { text: 'Удалить', callback_data: :delete }],
+        [{ text: 'Назад', callback_data: :back }]
+      ]
+    }
+  end
+
   def message(data)
     @mention_bot.handle_context(data.fetch('text'))
   end
@@ -28,8 +37,17 @@ class Telegram::WebhookController < Telegram::Bot::UpdatesController
   end
 
   def groups!
-    msg = Group.all.map { |g| "- #{g.name}" }.join("\n")
-    respond_with :message, text: msg
+    buttons = {
+      reply_markup: {
+        inline_keyboard: Group.all.each_slice(2).map do |batch|
+          batch.map do |group|
+            { text: group.name, callback_data: group.name }
+          end
+        end
+      }
+    }
+
+    respond_with :message, text: 'Выберете группу:', **buttons
   end
 
   def cancel!
