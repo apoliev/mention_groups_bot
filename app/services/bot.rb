@@ -35,7 +35,7 @@ class Bot
   end
 
   def handle_context(txt)
-    return unless context.present?
+    return if context.blank?
 
     send(context, txt)
   end
@@ -51,6 +51,7 @@ class Bot
   def add_group(group_name)
     group = ::Group.create!(name: group_name, chat_id: chat.id)
     send_message(msg: "Создана группа `#{group.name}`")
+
     delete_context
   rescue ActiveRecord::RecordInvalid => e
     send_message(msg: e.record.errors.full_messages.join("\n"))
@@ -58,11 +59,13 @@ class Bot
 
   def edit_group(txt)
     callback_handler = ::Bots::GroupCallback.new(self)
-    group = ::Group.where(chat: chat).find_by!(name: callback_handler.target)
+    group = ::Group.where(chat: @chat).find_by!(name: callback_handler.target)
     group.name = txt
     group.save!
 
     send_message(msg: 'Группа успешно изменена')
+
+    callback_handler.delete_target
     delete_context
   rescue ActiveRecord::RecordNotFound => e
     send_message(msg: 'Группа не найдена')
@@ -75,8 +78,8 @@ class Bot
 
     callback_handler = ::Bots::GroupCallback.new(self)
     clients = txt.gsub('@', '').split
-    group = ::Group.where(chat: chat).find_by!(name: callback_handler.target)
-    users = ::User.where(telegram_username: clients, chat: chat)
+    group = ::Group.where(chat: @chat).find_by!(name: callback_handler.target)
+    users = ::User.where(telegram_username: clients, chat: @chat)
 
     users.each do |user|
       group.users << user
@@ -84,6 +87,8 @@ class Bot
     rescue ActiveRecord::RecordInvalid => e
       send_message(msg: e.record.errors.full_messages.join("\n"))
     end
+
+    callback_handler.delete_target
     delete_context
   rescue ActiveRecord::RecordNotFound => e
     send_message(msg: 'Группа не найдена')
