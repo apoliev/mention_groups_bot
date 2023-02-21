@@ -16,7 +16,7 @@ module Bots
       if groups.present?
         mention_bot.bot.send_message(
           chat_id: mention_bot.chat.telegram_chat_id,
-          text: 'В какую группу хотите добавить?',
+          text: I18n.t('telegram.choose_group_for_add'),
           reply_markup: {
             inline_keyboard: groups.each_slice(2).map do |batch|
               batch.map do |group|
@@ -28,7 +28,7 @@ module Bots
       else
         mention_bot.bot.send_message(
           chat_id: mention_bot.chat.telegram_chat_id,
-          text: 'Групп нет. Чтобы добавить группу введите /add_group'
+          text: I18n.t('telegram.admin_group_not_exist')
         )
       end
     end
@@ -42,7 +42,7 @@ module Bots
 
       if groups.present?
         {
-          text: 'Выберете группу:',
+          text: I18n.t('telegram.choose_group'),
           reply_markup: {
             inline_keyboard: groups.each_slice(2).map do |batch|
               batch.map do |group|
@@ -52,21 +52,22 @@ module Bots
           }
         }
       else
-        { text: 'Групп нет. Чтобы добавить группу введите /add_group' }
+        { text: I18n.t('telegram.admin_group_not_exist') }
       end
     end
 
     def groups_handler(command)
       {
-        text: "Группа `#{command}`",
+        text: I18n.t('telegram.group', name: command),
         parse_mode: 'Markdown',
         reply_markup: {
           inline_keyboard: [
             [
-              { text: 'Изменить', callback_data: "group:#{command}#edit" },
-              { text: 'Удалить', callback_data: "group:#{command}#delete" }
+              { text: I18n.t('telegram.edit'), callback_data: "group:#{command}#edit" },
+              { text: I18n.t('telegram.delete'), callback_data: "group:#{command}#delete" }
             ],
-            [{ text: 'Назад', callback_data: 'group:back' }]
+            [{ text: I18n.t('telegram.user_list'), callback_data: "group:#{command}#list" }],
+            [{ text: I18n.t('telegram.back'), callback_data: 'group:back' }]
           ]
         }
       }
@@ -81,22 +82,30 @@ module Bots
       when 'edit'
         add_target(group)
         mention_bot.add_context(:edit_group)
-        { text: 'Введите новое название группы' }
+        { text: I18n.t('telegram.edit_group') }
       when 'delete'
         {
-          text: 'Вы уверены?',
+          text: I18n.t('telegram.confirm'),
           reply_markup: {
             inline_keyboard: [
               [
-                { text: 'Да', callback_data: "group:#{group}#destroy" },
-                { text: 'Нет', callback_data: "groups:#{group}" }
+                { text: I18n.t('telegram.t_yes'), callback_data: "group:#{group}#destroy" },
+                { text: I18n.t('telegram.t_no'), callback_data: "groups:#{group}" }
               ]
             ]
           }
         }
       when 'destroy'
         ::Group.where(chat: mention_bot.chat).find_by!(name: group).destroy!
-        { text: "Группа `#{group}` успешно удалена", parse_mode: 'Markdown' }
+        { text: I18n.t('telegram.group_deleted', group_name: group), parse_mode: 'Markdown' }
+      when 'list'
+        group = ::Group.where(chat: mention_bot.chat).includes(:users).find_by!(name: group)
+        msg = group.users.select { |u| u.telegram_username? }.map { |u| "- #{u.telegram_username}" }.join("\n")
+        if msg.present?
+          { text: msg }
+        else
+          { text: I18n.t('telegram.users_without_username') }
+        end
       end
     rescue ActiveRecord::RecordNotFound => e
       mention_bot.bot.send_message(chat_id: mention_bot.chat.telegram_chat_id, text: 'Группа не найдена')
@@ -110,7 +119,7 @@ module Bots
       add_target(command)
       mention_bot.add_context(:add_clients)
       {
-        text: "Напишите пользователей, которых вы хотите добавить в группу `#{command}` в формате \"@username1 @username2\"",
+        text: I18n.t('telegram.format_for_add', group_name: command),
         parse_mode: 'Markdown'
       }
     end

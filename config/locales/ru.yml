@@ -1,0 +1,43 @@
+ru:
+  activerecord:
+    attributes:
+      group:
+        name: Название
+      user_group:
+        user_id: Пользователь
+    errors:
+      models:
+        group:
+          attributes:
+            name:
+              invalid: имеет неверный формат. Доступны символы a-z
+              taken: уже используется. Придумайте новое
+        user_group:
+          attributes:
+            user_id:
+              taken: уже находится в группе
+  telegram:
+    add_group: Введите название группы
+    group_not_exist: Групп нет, обратитесь к администратору, чтобы добавить
+    admin_group_not_exist: Групп нет. Чтобы добавить группу введите /add_group
+    command_canceled: Команда `%{command}` отменена
+    group_created: Создана группа `%{group_name}`
+    group_updated: Группа успешно изменена
+    group_not_found: Группа не найдена
+    wrong_format: Неверный формат
+    user_added: Пользователь @%{username} добавлен в группу `%{group_name}`
+    goto: Перейти
+    choose_group_for_add: В какую группу хотите добавить?
+    choose_group: 'Выберете группу:'
+    group: Группа `%{name}`
+    edit: Изменить
+    delete: Удалить
+    back: Назад
+    edit_group: Введите новое название группы
+    t_yes: Да
+    t_no: Нет
+    confirm: Вы уверены?
+    group_deleted: Группа `%{group_name}` успешно удалена
+    format_for_add: Напишите пользователей, которых вы хотите добавить в группу `%{group_name}` в формате \"@username1 @username2\"
+    user_list: Список пользователей
+    users_without_username: Нет пользователей с username

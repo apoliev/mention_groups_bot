@@ -16,4 +16,6 @@ class User < ApplicationRecord
   has_many :groups, through: :user_groups
 
   validates :chat_id, uniqueness: { scope: :telegram_user_id }
+
+  scope :with_username, -> { where.not(telegram_username: nil) }
 end

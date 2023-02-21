@@ -50,7 +50,7 @@ class Bot
 
   def add_group(group_name)
     group = ::Group.create!(name: group_name, chat_id: chat.id)
-    send_message(msg: "Создана группа `#{group.name}`")
+    send_message(msg: I18n.t('telegram.group_created', group_name: group.name))
 
     delete_context
   rescue ActiveRecord::RecordInvalid => e
@@ -63,18 +63,18 @@ class Bot
     group.name = txt
     group.save!
 
-    send_message(msg: 'Группа успешно изменена')
+    send_message(msg: I18n.t('telegram.group_updated'))
 
     callback_handler.delete_target
     delete_context
   rescue ActiveRecord::RecordNotFound => e
-    send_message(msg: 'Группа не найдена')
+    send_message(msg: I18n.t('telegram.group_not_found'))
   rescue ActiveRecord::RecordInvalid => e
     send_message(msg: e.record.errors.full_messages.join("\n"))
   end
 
   def add_clients(txt)
-    return send_message(msg: 'Неверный формат') unless /\A((@[a-zA-Z0-9_-]+) ?)+\z/.match(txt)
+    return send_message(msg: I18n.t('telegram.wrong_format')) unless /\A((@[a-zA-Z0-9_-]+) ?)+\z/.match(txt)
 
     callback_handler = ::Bots::GroupCallback.new(self)
     clients = txt.gsub('@', '').split
@@ -83,7 +83,7 @@ class Bot
 
     users.each do |user|
       group.users << user
-      send_message(msg: "Пользователь @#{user.telegram_username} добавлен в группу `#{group.name}`")
+      send_message(msg: I18n.t('telegram.user_added', username: user.telegram_username, group_name: group.name))
     rescue ActiveRecord::RecordInvalid => e
       send_message(msg: e.record.errors.full_messages.join("\n"))
     end
@@ -91,7 +91,7 @@ class Bot
     callback_handler.delete_target
     delete_context
   rescue ActiveRecord::RecordNotFound => e
-    send_message(msg: 'Группа не найдена')
+    send_message(msg: I18n.t('telegram.group_not_found'))
   end
 
   private
@@ -112,7 +112,7 @@ class Bot
         {
           reply_markup: {
             inline_keyboard: [
-              [{ text: 'Перейти', url: link }]
+              [{ text: I18n.t('telegram.goto'), url: link }]
             ]
           }
         }

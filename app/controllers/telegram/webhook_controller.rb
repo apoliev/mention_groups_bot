@@ -24,15 +24,15 @@ class Telegram::WebhookController < Telegram::Bot::UpdatesController
   end
 
   def all!(*_args)
-    msg = User.where(
-      chat: @chat
-    ).where.not(telegram_user_id: @user.telegram_user_id).map { |u| "@#{u.telegram_username}" }.join(' ')
+    msg = User.with_username.where(chat: @chat).where.not(telegram_user_id: @user.telegram_user_id).map do |u|
+      "@#{u.telegram_username}"
+    end.join(' ')
     respond_with :message, text: msg unless msg.empty?
   end
 
   def add_group!(*_args)
     @mention_bot.add_context(:add_group)
-    respond_with :message, text: 'Напишите название группы'
+    respond_with :message, text: t('telegram.add_group')
   end
 
   def groups!(*_args)
@@ -41,7 +41,7 @@ class Telegram::WebhookController < Telegram::Bot::UpdatesController
     else
       msg = ::Group.where(chat: @chat).map { |g| "- #{g.name}" }.join("\n")
       if msg.empty?
-        respond_with :message, text: 'Групп нет, обратитесь к администратору, чтобы добавить'
+        respond_with :message, text: t('telegram.group_not_exist')
       else
         respond_with :message, text: msg
       end
@@ -57,7 +57,7 @@ class Telegram::WebhookController < Telegram::Bot::UpdatesController
     return if context.blank?
 
     @mention_bot.delete_context
-    respond_with :message, text: "Команда `#{context}` отменена", parse_mode: 'Markdown'
+    respond_with :message, text: t('telegram.command_canceled', command: context), parse_mode: 'Markdown'
   end
 
   def action_missing(action, *_args)
@@ -65,7 +65,7 @@ class Telegram::WebhookController < Telegram::Bot::UpdatesController
 
     return if group.blank?
 
-    msg = group.users.where.not(id: @user.id).map { |u| "@#{u.telegram_username}" }.join(' ')
+    msg = group.users.with_username.where.not(id: @user.id).map { |u| "@#{u.telegram_username}" }.join(' ')
     respond_with :message, text: msg if msg.present?
   end
 
