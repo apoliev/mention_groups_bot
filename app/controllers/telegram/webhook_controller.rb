@@ -6,11 +6,15 @@ class Telegram::WebhookController < Telegram::Bot::UpdatesController
 
   class NotGroupChat < ::StandardError; end
   class NotAdmin < ::StandardError; end
+  class UserWithoutUsername < ::StandardError; end
 
   rescue_from NotGroupChat do |e|
   end
 
   rescue_from NotAdmin do |e|
+  end
+
+  rescue_from UserWithoutUsername do |e|
   end
 
   def callback_query(data)
@@ -78,13 +82,33 @@ class Telegram::WebhookController < Telegram::Bot::UpdatesController
   end
 
   def set_user
-    @user = User.find_or_create_by(telegram_user_id: from.fetch('id'), chat_id: @chat.id)
+    if from['username'].blank?
+      respond_with(
+        :message,
+        text: I18n.t('telegram.user_without_username'),
+        parse_mode: 'Markdown',
+        reply_markup: {
+          inline_keyboard: [
+            [
+              {
+                text: I18n.t('telegram.add_username_help'),
+                url: 'https://telegram.org/faq#q-what-are-usernames-how-do-i-get-one'
+              }
+            ]
+          ]
+        }
+      )
 
-    return unless !@user.telegram_username? || (@user.updated_at + 1.month) <= Time.zone.now
+      raise UserWithoutUsername
+    end
 
-    @user.telegram_username = from['username']
-    @user.name = "#{from['last_name']} #{from['first_name']}".strip
-    @user.save
+    @user = User.where(telegram_user_id: from.fetch('id'), chat_id: @chat.id).first_or_initialize(
+      telegram_user_id: from.fetch('id'),
+      chat_id: @chat.id,
+      telegram_username: from.fetch('username')
+    )
+
+    @user.save if @user.new_record?
   end
 
   def set_mention_bot

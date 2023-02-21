@@ -38,6 +38,8 @@ ru:
     t_no: Нет
     confirm: Вы уверены?
     group_deleted: Группа `%{group_name}` успешно удалена
-    format_for_add: Напишите пользователей, которых вы хотите добавить в группу `%{group_name}` в формате \"@username1 @username2\"
+    format_for_add: "Напишите пользователей, которых вы хотите добавить в группу `%{group_name}` в формате \"@username1 @username2\""
     user_list: Список пользователей
     users_without_username: Нет пользователей с username
+    user_without_username: Обнаружен пользователь без `username`
+    add_username_help: Подробней о username
