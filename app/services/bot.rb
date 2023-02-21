@@ -1,6 +1,8 @@
 class Bot
   CONTEXTS = %i[
     add_group
+    edit_group
+    add_clients
   ].freeze
 
   attr_reader :bot, :chat, :user
@@ -33,9 +35,16 @@ class Bot
   end
 
   def handle_context(txt)
-    case context
-    when :add_group
-      add_group(txt)
+    return unless context.present?
+
+    send(context, txt)
+  end
+
+  def handle_callback(data)
+    callback_type, command = data.split(':')
+    case callback_type
+    when 'groups', 'group', 'choose_group'
+      ::Bots::GroupCallback.new(self).handle(callback_type, command)
     end
   end
 
@@ -45,6 +54,39 @@ class Bot
     delete_context
   rescue ActiveRecord::RecordInvalid => e
     send_message(msg: e.record.errors.full_messages.join("\n"))
+  end
+
+  def edit_group(txt)
+    callback_handler = ::Bots::GroupCallback.new(self)
+    group = ::Group.where(chat: chat).find_by!(name: callback_handler.target)
+    group.name = txt
+    group.save!
+
+    send_message(msg: 'Группа успешно изменена')
+    delete_context
+  rescue ActiveRecord::RecordNotFound => e
+    send_message(msg: 'Группа не найдена')
+  rescue ActiveRecord::RecordInvalid => e
+    send_message(msg: e.record.errors.full_messages.join("\n"))
+  end
+
+  def add_clients(txt)
+    return send_message(msg: 'Неверный формат') unless /\A((@[a-zA-Z0-9_-]+) ?)+\z/.match(txt)
+
+    callback_handler = ::Bots::GroupCallback.new(self)
+    clients = txt.gsub('@', '').split
+    group = ::Group.where(chat: chat).find_by!(name: callback_handler.target)
+    users = ::User.where(telegram_username: clients, chat: chat)
+
+    users.each do |user|
+      group.users << user
+      send_message(msg: "Пользователь @#{user.telegram_username} добавлен в группу `#{group.name}`")
+    rescue ActiveRecord::RecordInvalid => e
+      send_message(msg: e.record.errors.full_messages.join("\n"))
+    end
+    delete_context
+  rescue ActiveRecord::RecordNotFound => e
+    send_message(msg: 'Группа не найдена')
   end
 
   private

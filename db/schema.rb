@@ -41,8 +41,10 @@ ActiveRecord::Schema[7.0].define(version: 2023_02_20_091819) do
     t.string "telegram_user_id"
     t.string "telegram_username"
     t.string "name"
+    t.bigint "chat_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.index ["chat_id"], name: "index_users_on_chat_id"
   end
 
 end
