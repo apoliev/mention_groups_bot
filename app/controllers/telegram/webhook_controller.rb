@@ -2,7 +2,7 @@ class Telegram::WebhookController < Telegram::Bot::UpdatesController
   before_action :set_chat
   before_action :set_user
   before_action :set_mention_bot
-  before_action :check_admin, except: %i[groups! all! action_missing]
+  before_action :check_admin, except: %i[help! groups! all! action_missing]
 
   class NotGroupChat < ::StandardError; end
   class NotAdmin < ::StandardError; end
@@ -24,7 +24,16 @@ class Telegram::WebhookController < Telegram::Bot::UpdatesController
   def message(data, *_args)
     return if data['text'].blank?
 
-    @mention_bot.handle_context(data['text'])
+    bot_action = %r{\A/(?<action>.+)@.+\z}.match(data['text'])
+    if bot_action && bot_action[:action].present?
+      send("#{bot_action[:action]}!")
+    else
+      @mention_bot.handle_context(data['text'])
+    end
+  end
+
+  def help!
+    respond_with :message, text: t('telegram.help')
   end
 
   def all!(*_args)
