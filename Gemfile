@@ -39,6 +39,7 @@ group :test do
   gem 'rspec'
   gem 'rspec-rails'
   gem 'rspec-retry'
+  gem 'shoulda-matchers'
   gem 'simplecov', require: false
   gem 'simplecov-console', require: false
   gem 'simplecov-lcov', require: false

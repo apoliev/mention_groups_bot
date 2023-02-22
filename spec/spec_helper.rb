@@ -15,6 +15,7 @@
 # See https://rubydoc.info/gems/rspec-core/RSpec/Core/Configuration
 require 'rspec/retry'
 require 'webmock/rspec'
+require 'shoulda/matchers'
 require 'simplecov'
 require 'simplecov-console'
 

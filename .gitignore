@@ -17,7 +17,7 @@
 /tmp/pids/*
 !/tmp/pids/
 !/tmp/pids/.keep
-
+.env
 
 /public/assets
 
@@ -25,3 +25,5 @@
 /config/master.key
 
 /config/credentials/development.key
+
+/config/credentials/test.key

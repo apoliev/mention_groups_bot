@@ -1,24 +1,13 @@
-# README
+# Mention group bot
+Чат-бот, который умеет тегать по группам
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+## Запуск для разработки
+```
+  bundle
 
-Things you may want to cover:
+  echo "export DATABASE_USERNAME=YOUR_USERNAME\nexport DATABASE_PASSWORD=YOUR_PASSWORD\nexport TELEGRAM_TOKEN=YOUR_TOKEN" > .env
 
-* Ruby version
+  source .env
 
-* System dependencies
-
-* Configuration
-
-* Database creation
-
-* Database initialization
-
-* How to run the test suite
-
-* Services (job queues, cache servers, search engines, etc.)
-
-* Deployment instructions
-
-* ...
+  rails telegram:bot:poller
+```
