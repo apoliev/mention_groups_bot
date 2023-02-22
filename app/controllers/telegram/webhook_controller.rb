@@ -41,7 +41,7 @@ class Telegram::WebhookController < Telegram::Bot::UpdatesController
 
   def groups!(*_args)
     if @mention_bot.user_admin?
-      ::Bots::GroupCallback.new(@mention_bot).groups
+      ::CallbackHandler.new(@mention_bot).groups
     else
       msg = ::Group.where(chat: @chat).map { |g| "- #{g.name}" }.join("\n")
       if msg.empty?
@@ -53,7 +53,7 @@ class Telegram::WebhookController < Telegram::Bot::UpdatesController
   end
 
   def add!(*_args)
-    ::Bots::GroupCallback.new(@mention_bot).groups_for_choose
+    ::CallbackHandler.new(@mention_bot).groups_for_choose
   end
 
   def cancel!(*_args)

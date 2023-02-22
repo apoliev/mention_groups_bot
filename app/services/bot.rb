@@ -11,6 +11,8 @@ class Bot
     @bot = Telegram.bot
     @chat = chat
     @user = user
+    @context_handler = ::ContextHandler.new(self)
+    @callback_handler = ::CallbackHandler.new(self)
   end
 
   def user_admin?
@@ -20,105 +22,45 @@ class Bot
     %w[creator administrator].include?(status)
   end
 
-  def add_context(context)
-    return unless CONTEXTS.include?(context)
+  def send_message(text:, **opts)
+    options = {
+      chat_id: chat.telegram_chat_id,
+      text:,
+      parse_mode: 'Markdown'
+    }.merge(opts)
 
-    Rails.cache.write(context_key, context, expires_in: 1.hour)
+    bot.send_message(**options)
+  end
+
+  def add_context(context)
+    @context_handler.add_context(context)
   end
 
   def delete_context
-    Rails.cache.delete(context_key)
+    @context_handler.delete_context
   end
 
   def context
-    Rails.cache.read(context_key)
+    @context_handler.context
   end
 
   def handle_context(txt)
-    return if context.blank?
+    @context_handler.handle(txt)
+  end
 
-    send(context, txt)
+  def add_target(target)
+    @callback_handler.add_target(target)
+  end
+
+  def delete_target
+    @callback_handler.delete_target
+  end
+
+  def target
+    @callback_handler.target
   end
 
   def handle_callback(data)
-    callback_type, command = data.split(':')
-    case callback_type
-    when 'groups', 'group', 'choose_group'
-      ::Bots::GroupCallback.new(self).handle(callback_type, command)
-    end
-  end
-
-  def add_group(group_name)
-    group = ::Group.create!(name: group_name, chat_id: chat.id)
-    send_message(msg: I18n.t('telegram.group_created', group_name: group.name))
-
-    delete_context
-  rescue ActiveRecord::RecordInvalid => e
-    send_message(msg: e.record.errors.full_messages.join("\n"))
-  end
-
-  def edit_group(txt)
-    callback_handler = ::Bots::GroupCallback.new(self)
-    group = ::Group.where(chat: @chat).find_by!(name: callback_handler.target)
-    group.name = txt
-    group.save!
-
-    send_message(msg: I18n.t('telegram.group_updated'))
-
-    callback_handler.delete_target
-    delete_context
-  rescue ActiveRecord::RecordNotFound => e
-    send_message(msg: I18n.t('telegram.group_not_found'))
-  rescue ActiveRecord::RecordInvalid => e
-    send_message(msg: e.record.errors.full_messages.join("\n"))
-  end
-
-  def add_clients(txt)
-    return send_message(msg: I18n.t('telegram.wrong_format')) unless /\A((@[a-zA-Z0-9_-]+) ?)+\z/.match(txt)
-
-    callback_handler = ::Bots::GroupCallback.new(self)
-    clients = txt.gsub('@', '').split
-    group = ::Group.where(chat: @chat).find_by!(name: callback_handler.target)
-    users = ::User.where(telegram_username: clients, chat: @chat)
-
-    users.each do |user|
-      group.users << user
-      send_message(msg: I18n.t('telegram.user_added', username: user.telegram_username, group_name: group.name))
-    rescue ActiveRecord::RecordInvalid => e
-      send_message(msg: e.record.errors.full_messages.join("\n"))
-    end
-
-    callback_handler.delete_target
-    delete_context
-  rescue ActiveRecord::RecordNotFound => e
-    send_message(msg: I18n.t('telegram.group_not_found'))
-  end
-
-  private
-
-  def context_key
-    { chat_id: chat.telegram_chat_id, user_id: user.telegram_user_id, type: :context }
-  end
-
-  def send_message(msg:, link: nil)
-    options = {
-      chat_id: chat.telegram_chat_id,
-      text: msg,
-      parse_mode: 'Markdown'
-    }
-
-    if link.present?
-      options.merge!(
-        {
-          reply_markup: {
-            inline_keyboard: [
-              [{ text: I18n.t('telegram.goto'), url: link }]
-            ]
-          }
-        }
-      )
-    end
-
-    bot.send_message(**options)
+    @callback_handler.handle(data)
   end
 end

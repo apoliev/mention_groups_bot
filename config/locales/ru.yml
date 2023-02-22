@@ -19,7 +19,7 @@ ru:
   telegram:
     add_group: Введите название группы
     group_not_exist: Групп нет, обратитесь к администратору, чтобы добавить
-    admin_group_not_exist: Групп нет. Чтобы добавить группу введите /add_group
+    admin_group_not_exist: "Групп нет. Чтобы добавить группу введите \/add\\_group"
     command_canceled: Команда `%{command}` отменена
     group_created: Создана группа `%{group_name}`
     group_updated: Группа успешно изменена
@@ -40,6 +40,9 @@ ru:
     group_deleted: Группа `%{group_name}` успешно удалена
     format_for_add: "Напишите пользователей, которых вы хотите добавить в группу `%{group_name}` в формате \"@username1 @username2\""
     user_list: Список пользователей
-    users_without_username: Нет пользователей с username
+    users_without_username: Нет пользователей
     user_without_username: Обнаружен пользователь без `username`
     add_username_help: Подробней о username
+    delete_users: Удалить пользователей
+    users_for_delete: Выберете пользователя для удаления
+    user_in_group_not_found: Пользователь не находится в группе
