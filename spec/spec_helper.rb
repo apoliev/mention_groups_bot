@@ -18,6 +18,7 @@ require 'webmock/rspec'
 require 'shoulda/matchers'
 require 'simplecov'
 require 'simplecov-console'
+require 'faker'
 
 SimpleCov.formatter = SimpleCov::Formatter::MultiFormatter.new(
   [
