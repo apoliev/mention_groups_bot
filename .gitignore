@@ -18,6 +18,7 @@
 !/tmp/pids/
 !/tmp/pids/.keep
 .env
+.production.env
 
 /public/assets
 

@@ -1,0 +1,28 @@
+version: "3.9"
+
+x-envs: &default-envs
+  env_file:
+    - .production.env
+
+services:
+  web:
+    <<: *default-envs
+    build: .
+    ports:
+      - 8080:3000
+    depends_on:
+      - database
+      - redis
+
+  redis:
+    <<: *default-envs
+    image: "redis:alpine"
+
+  database:
+    <<: *default-envs
+    image: postgres:12.11-alpine
+    restart: always
+    volumes:
+      - db_data:/var/lib/postgresql/data
+volumes:
+  db_data:
