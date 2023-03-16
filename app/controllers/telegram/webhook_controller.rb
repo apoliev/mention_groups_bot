@@ -85,7 +85,7 @@ class Telegram::WebhookController < Telegram::Bot::UpdatesController
   private
 
   def set_chat
-    raise NotGroupChat unless chat.fetch('type') == 'group'
+    raise NotGroupChat unless %w[group supergroup].includes?(chat.fetch('type'))
 
     @chat = Chat.find_or_create_by(telegram_chat_id: chat.fetch('id'))
   end
