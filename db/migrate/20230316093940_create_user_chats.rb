@@ -5,5 +5,7 @@ class CreateUserChats < ActiveRecord::Migration[7.0]
       t.references :chat, index: true
       t.timestamps
     end
+
+    remove_column :users, :chat_id
   end
 end

@@ -5,7 +5,6 @@
 #  id                :bigint           not null, primary key
 #  telegram_user_id  :string
 #  telegram_username :string
-#  chat_id           :bigint
 #  created_at        :datetime         not null
 #  updated_at        :datetime         not null
 #

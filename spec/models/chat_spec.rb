@@ -12,6 +12,7 @@ require 'rails_helper'
 RSpec.describe Chat, type: :model do
   describe 'associations' do
     it { is_expected.to have_many(:groups).dependent(:destroy) }
-    it { is_expected.to have_many(:users).dependent(:destroy) }
+    it { is_expected.to have_many(:user_chats).dependent(:destroy) }
+    it { is_expected.to have_many(:users).through(:user_chats) }
   end
 end
