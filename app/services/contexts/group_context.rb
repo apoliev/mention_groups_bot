@@ -12,7 +12,7 @@ module Contexts
     end
 
     def edit_group(new_name)
-      group = ::Group.where(chat: mention_bot.chat).find_by!(name: mention_bot.target)
+      group = mention_bot.chat.groups.find_by!(name: mention_bot.target)
       group.name = new_name
       group.save!
 
@@ -32,8 +32,8 @@ module Contexts
       end
 
       clients = client_list.gsub('@', '').split
-      group = ::Group.where(chat: mention_bot.chat).find_by!(name: mention_bot.target)
-      users = ::User.where(telegram_username: clients, chat: mention_bot.chat)
+      group = mention_bot.chat.groups.find_by!(name: mention_bot.target)
+      users = mention_bot.chat.users.where(telegram_username: clients)
 
       users.each do |user|
         group.users << user

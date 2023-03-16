@@ -6,7 +6,7 @@ class Telegram::WebhookController < Telegram::Bot::UpdatesController
 
   class NotGroupChat < ::StandardError; end
   class NotAdmin < ::StandardError; end
-  class UserWithoutUsername < ::StandardError; end
+  class UserError < ::StandardError; end
 
   rescue_from NotGroupChat do |e|
   end
@@ -14,7 +14,7 @@ class Telegram::WebhookController < Telegram::Bot::UpdatesController
   rescue_from NotAdmin do |e|
   end
 
-  rescue_from UserWithoutUsername do |e|
+  rescue_from UserError do |e|
   end
 
   def callback_query(data)
@@ -37,7 +37,7 @@ class Telegram::WebhookController < Telegram::Bot::UpdatesController
   end
 
   def all!(*_args)
-    msg = User.with_username.where(chat: @chat).where.not(telegram_user_id: @user.telegram_user_id).map do |u|
+    msg = @chat.users.where.not(telegram_user_id: @user.telegram_user_id).map do |u|
       "@#{u.telegram_username}"
     end.join(' ')
     respond_with :message, text: msg unless msg.empty?
@@ -52,7 +52,7 @@ class Telegram::WebhookController < Telegram::Bot::UpdatesController
     if @mention_bot.user_admin?
       ::CallbackHandler.new(@mention_bot).groups
     else
-      msg = ::Group.where(chat: @chat).map { |g| "- #{g.name}" }.join("\n")
+      msg = @chat.groups.map { |g| "- #{g.name}" }.join("\n")
       if msg.empty?
         respond_with :message, text: t('telegram.group_not_exist')
       else
@@ -74,11 +74,11 @@ class Telegram::WebhookController < Telegram::Bot::UpdatesController
   end
 
   def action_missing(action, *_args)
-    group = ::Group.where(chat: @chat).find_by(name: action.gsub('!', ''))
+    group = @chat.groups.find_by(name: action.gsub('!', ''))
 
     return if group.blank?
 
-    msg = group.users.with_username.where.not(id: @user.id).map { |u| "@#{u.telegram_username}" }.join(' ')
+    msg = group.users.where.not(id: @user.id).map { |u| "@#{u.telegram_username}" }.join(' ')
     respond_with :message, text: msg if msg.present?
   end
 
@@ -108,16 +108,19 @@ class Telegram::WebhookController < Telegram::Bot::UpdatesController
         }
       )
 
-      raise UserWithoutUsername
+      raise UserError
     end
 
-    @user = User.where(telegram_user_id: from.fetch('id'), chat_id: @chat.id).first_or_initialize(
+    @user = User.where(telegram_user_id: from.fetch('id')).first_or_initialize(
       telegram_user_id: from.fetch('id'),
-      chat_id: @chat.id,
-      telegram_username: from.fetch('username')
+      telegram_username: from['username']
     )
 
-    @user.save if @user.new_record?
+    @user.save! if @user.new_record?
+    @user.chats << @chat unless @user.in_chat?(@chat.id)
+  rescue ActiveRecord::RecordInvalid => e
+    respond_with(:message, text: e.record.errors.full_messages.join("\n"))
+    raise UserError
   end
 
   def set_mention_bot

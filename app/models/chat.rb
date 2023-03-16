@@ -9,5 +9,6 @@
 #
 class Chat < ApplicationRecord
   has_many :groups, dependent: :destroy
-  has_many :users, dependent: :destroy
+  has_many :user_chats, dependent: :destroy
+  has_many :users, through: :user_chats
 end

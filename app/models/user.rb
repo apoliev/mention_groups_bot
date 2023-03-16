@@ -10,11 +10,22 @@
 #  updated_at        :datetime         not null
 #
 class User < ApplicationRecord
-  belongs_to :chat
   has_many :user_groups, dependent: :destroy
   has_many :groups, through: :user_groups
+  has_many :user_chats, dependent: :destroy
+  has_many :chats, through: :user_chats
 
-  validates :chat_id, uniqueness: { scope: :telegram_user_id }
+  with_options presence: true do
+    validates :telegram_user_id
+    validates :telegram_username
+  end
 
-  scope :with_username, -> { where.not(telegram_username: nil) }
+  with_options allow_nil: true, allow_blank: true do
+    validates :telegram_user_id, uniqueness: true
+    validates :telegram_username, uniqueness: true
+  end
+
+  def in_chat?(chat)
+    user_chats.where(chat_id: chat).exists?
+  end
 end

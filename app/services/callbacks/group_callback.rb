@@ -3,7 +3,7 @@ module Callbacks
     extend ActiveSupport::Concern
 
     def all_groups
-      groups = ::Group.where(chat: mention_bot.chat).order(:id)
+      groups = mention_bot.chat.groups.order(:id)
 
       if groups.present?
         {
@@ -26,7 +26,7 @@ module Callbacks
     end
 
     def groups_for_choose
-      groups = ::Group.where(chat: mention_bot.chat).order(:id)
+      groups = mention_bot.chat.groups.order(:id)
 
       if groups.present?
         mention_bot.send_message(
@@ -88,11 +88,11 @@ module Callbacks
           }
         }
       when 'destroy'
-        ::Group.where(chat: mention_bot.chat).find_by!(name: group).destroy!
+        mention_bot.chat.groups.find_by!(name: group).destroy!
 
         { text: I18n.t('telegram.group_deleted', group_name: group), parse_mode: 'Markdown' }
       when 'list'
-        group = ::Group.where(chat: mention_bot.chat).includes(:users).find_by!(name: group)
+        group = mention_bot.chat.groups.includes(:users).find_by!(name: group)
         msg = group.users.map { |u| "- #{u.telegram_username}" }.join("\n")
 
         if msg.present?
@@ -101,7 +101,7 @@ module Callbacks
           { text: I18n.t('telegram.users_without_username') }
         end
       when 'delete_users'
-        group = ::Group.where(chat: mention_bot.chat).includes(:users).find_by!(name: group)
+        group = mention_bot.chat.groups.includes(:users).find_by!(name: group)
         users = group.users
 
         if users.present?
