@@ -13,5 +13,5 @@ class Group < ApplicationRecord
   has_many :user_groups, dependent: :destroy
   has_many :users, through: :user_groups
 
-  validates :name, presence: true, format: { with: /\A[a-z_]+\z/ }, uniqueness: true
+  validates :name, presence: true, format: { with: /\A[a-z_]+\z/ }, uniqueness: { scope: :chat_id }
 end
