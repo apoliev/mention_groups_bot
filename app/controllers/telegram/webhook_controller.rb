@@ -1,12 +1,17 @@
 class Telegram::WebhookController < Telegram::Bot::UpdatesController
+  before_action :check_left
   before_action :set_chat
   before_action :set_user
   before_action :set_mention_bot
   before_action :check_admin, except: %i[help! groups! all! action_missing]
 
+  class LeftChat < ::StandardError; end
   class NotGroupChat < ::StandardError; end
   class NotAdmin < ::StandardError; end
   class UserError < ::StandardError; end
+
+  rescue_from LeftChat do |e|
+  end
 
   rescue_from NotGroupChat do |e|
   end
@@ -73,7 +78,16 @@ class Telegram::WebhookController < Telegram::Bot::UpdatesController
     respond_with :message, text: t('telegram.command_canceled', command: context), parse_mode: 'Markdown'
   end
 
-  def action_missing(action, *_args)
+  def action_missing(action, *args)
+    if action == 'my_chat_member'
+      chat_member_status = args[0].dig('new_chat_member', 'status')
+
+      if %w[kicked left].include?(chat_member_status)
+        @chat.destroy
+        return
+      end
+    end
+
     group = @chat.groups.find_by(name: action.gsub('!', ''))
 
     return if group.blank?
@@ -84,8 +98,13 @@ class Telegram::WebhookController < Telegram::Bot::UpdatesController
 
   private
 
+  def check_left
+    left_bot_id = update.dig('message', 'left_chat_member', 'id')
+    raise LeftChat if left_bot_id.present? && (left_bot_id == bot.get_me.dig('result', 'id'))
+  end
+
   def set_chat
-    raise NotGroupChat unless %w[group supergroup].includes?(chat.fetch('type'))
+    raise NotGroupChat unless %w[group supergroup].include?(chat.fetch('type'))
 
     @chat = Chat.find_or_create_by(telegram_chat_id: chat.fetch('id'))
   end
