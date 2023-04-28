@@ -14,7 +14,7 @@ Chatbot that can tag by groups
   rails telegram:bot:poller
 ```
 
-## Запуск
+## Start
 
 Variables to run via docker compose should be in `.production.env` file
 
