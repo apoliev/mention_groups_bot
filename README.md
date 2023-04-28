@@ -1,7 +1,7 @@
 # Mention group bot
-Чат-бот, который умеет тегать по группам
+Chatbot that can tag by groups
 
-## Запуск для разработки
+## Launch for development
 ```
   bundle
 
@@ -9,12 +9,14 @@
 
   source .env
 
+  rails db:create db:migrate
+
   rails telegram:bot:poller
 ```
 
 ## Запуск
 
-Переменные для запуска через docker compose должны быть в файле `.production.env`
+Variables to run via docker compose should be in `.production.env` file
 
 ```
   POSTGRES_USER=your_user
@@ -28,7 +30,7 @@
   REDIS_URL=redis://redis:6379/1
 ```
 
-Далее запускаем через `docker compose`
+Next, run through `docker compose`
 
 ```
   docker compose up -d
