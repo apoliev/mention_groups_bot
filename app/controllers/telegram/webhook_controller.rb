@@ -103,10 +103,27 @@ class Telegram::WebhookController < Telegram::Bot::UpdatesController
     raise LeftChat if left_bot_id.present? && (left_bot_id == bot.get_me.dig('result', 'id'))
   end
 
+  def migrate_chat(chat, new_chat_id)
+    new_chat = Chat.includes(:users, :groups).find_by(telegram_chat_id: new_chat_id)
+    return if new_chat.nil?
+
+    Chat.transaction do
+      new_chat.users = (new_chat.users + chat.users).uniq
+      new_chat.groups += chat.groups
+
+      chat.reload.destroy
+    end
+  end
+
   def set_chat
     raise NotGroupChat unless %w[group supergroup].include?(chat.fetch('type'))
 
-    @chat = Chat.find_or_create_by(telegram_chat_id: chat.fetch('id'))
+    @chat = Chat.includes(:users, :groups).find_or_create_by(telegram_chat_id: chat.fetch('id'))
+    migrate_chat_id = update.dig('message', 'migrate_to_chat_id')
+    return unless migrate_chat_id
+
+    migrate_chat(@chat, migrate_chat_id)
+    raise LeftChat
   end
 
   def set_user
@@ -136,7 +153,7 @@ class Telegram::WebhookController < Telegram::Bot::UpdatesController
     )
 
     @user.save! if @user.new_record?
-    @user.chats << @chat unless @user.in_chat?(@chat.id)
+    @user.chats << @chat unless @chat.users.include?(@user)
   rescue ActiveRecord::RecordInvalid => e
     respond_with(:message, text: e.record.errors.full_messages.join("\n"))
     raise UserError
