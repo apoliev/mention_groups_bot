@@ -26,7 +26,7 @@ Variables to run via docker compose should be in `.production.env` file
   DATABASE_PASSWORD=your_password
   TELEGRAM_TOKEN=your_token
   BOT_HOST=your_host
-  RAILS_MASTER_KEY=your_master_key
+  SECRET_KEY_BASE=your_master_key
   REDIS_URL=redis://redis:6379/1
 ```
 
