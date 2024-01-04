@@ -3,7 +3,7 @@ class Telegram::WebhookController < Telegram::Bot::UpdatesController
   before_action :set_chat
   before_action :set_user
   before_action :set_mention_bot
-  before_action :check_admin, except: %i[help! groups! all! action_missing]
+  before_action :check_admin, except: %i[help! groups! all! action_missing message]
 
   class LeftChat < ::StandardError; end
   class NotGroupChat < ::StandardError; end
@@ -26,12 +26,18 @@ class Telegram::WebhookController < Telegram::Bot::UpdatesController
     edit_message :text, **@mention_bot.handle_callback(data)
   end
 
-  def message(data, *_args)
-    return if data['text'].blank?
+  def edited_message(*args)
+    message(*args)
+  end
 
-    bot_action = %r{\A/(?<action>.+)@.+\z}.match(data['text'])
+  def message(data, *_args)
+    return @mention_bot.handle_event(data) if data['text'].blank?
+
+    bot_action = %r{/(?<action>[a-z_]+)(@.+)?}.match(data['text'])
     if bot_action && bot_action[:action].present?
-      send("#{bot_action[:action]}!")
+      method = "#{bot_action[:action]}!"
+
+      respond_to?(method) ? send(method) : action_missing("#{bot_action[:action]}!")
     else
       @mention_bot.handle_context(data['text'])
     end
@@ -130,14 +136,14 @@ class Telegram::WebhookController < Telegram::Bot::UpdatesController
     if from['username'].blank?
       respond_with(
         :message,
-        text: I18n.t('telegram.user_without_username'),
-        parse_mode: 'Markdown',
+        text:         I18n.t('telegram.user_without_username'),
+        parse_mode:   'MarkdownV2',
         reply_markup: {
           inline_keyboard: [
             [
               {
                 text: I18n.t('telegram.add_username_help'),
-                url: 'https://telegram.org/faq#q-what-are-usernames-how-do-i-get-one'
+                url:  'https://telegram.org/faq#q-what-are-usernames-how-do-i-get-one'
               }
             ]
           ]
@@ -147,8 +153,10 @@ class Telegram::WebhookController < Telegram::Bot::UpdatesController
       raise UserError
     end
 
+    raise UserError if from['is_bot']
+
     @user = User.where(telegram_user_id: from.fetch('id')).first_or_initialize(
-      telegram_user_id: from.fetch('id'),
+      telegram_user_id:  from.fetch('id'),
       telegram_username: from['username']
     )
 

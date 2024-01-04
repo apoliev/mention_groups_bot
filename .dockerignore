@@ -1,5 +1,7 @@
 log/
 tmp/
+.vscode/
+.git/
 
 .env
 .gitattributes

@@ -4,7 +4,11 @@ module Contexts
 
     def add_group(group_name)
       group = ::Group.create!(name: group_name, chat_id: mention_bot.chat.id)
-      mention_bot.send_message(text: I18n.t('telegram.group_created', group_name: group.name))
+      mention_bot.send_message(
+        text:       I18n.t('telegram.group_created', group_name: group.name),
+        sanitize:   false,
+        parse_mode: 'Markdown'
+      )
 
       delete_context
     rescue ActiveRecord::RecordInvalid => e
@@ -38,7 +42,13 @@ module Contexts
       users.each do |user|
         group.users << user
         mention_bot.send_message(
-          text: I18n.t('telegram.user_added', username: user.telegram_username, group_name: group.name)
+          text:       I18n.t(
+            'telegram.user_added',
+            username:   mention_bot.sanitize(user.telegram_username),
+            group_name: group.name
+          ),
+          sanitize:   false,
+          parse_mode: 'Markdown'
         )
       rescue ActiveRecord::RecordInvalid => e
         mention_bot.send_message(text: e.record.errors.full_messages.join("\n"))
