@@ -92,7 +92,7 @@ class Bot
       )
 
       new_member.save! if new_member.new_record?
-      new_member.chats << chat unless chat.users.include?(new_member)
+      new_member.chats << chat unless chat.reload.users.include?(new_member)
     end
   rescue ActiveRecord::RecordInvalid => e
     send_message(text: e.record.errors.full_messages.join("\n"))

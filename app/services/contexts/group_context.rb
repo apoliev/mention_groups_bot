@@ -48,7 +48,7 @@ module Contexts
             group_name: group.name
           ),
           sanitize:   false,
-          parse_mode: 'Markdown'
+          parse_mode: 'MarkdownV2'
         )
       rescue ActiveRecord::RecordInvalid => e
         mention_bot.send_message(text: e.record.errors.full_messages.join("\n"))

@@ -33,7 +33,7 @@ class Telegram::WebhookController < Telegram::Bot::UpdatesController
   def message(data, *_args)
     return @mention_bot.handle_event(data) if data['text'].blank?
 
-    bot_action = %r{/(?<action>[a-z_]+)(@.+)?}.match(data['text'])
+    bot_action = %r{\B/(?<action>[a-z_]+)(@.+)?}.match(data['text'])
     if bot_action && bot_action[:action].present?
       method = "#{bot_action[:action]}!"
 
